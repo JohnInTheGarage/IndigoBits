@@ -13,7 +13,7 @@
 * with equatorial axes (therefore also assumes you are using an equatorial mount!).
 *
 * An image is taken at each point in the search pattern and so when it stops searching
-* (after 3 loops by default, giving a box 5x5 in size) then you can look at each image
+* (after 3 loops by default, giving a box 7x8 in size) then you can look at each image
 * to see if the target was found.
 * The image FITS header will give you the coordinates to do another GOTO to locate
 * the target from items SrchRA and SrchDec.
@@ -23,6 +23,9 @@
 * focal length for more realistic movements).
 *
 * John Knight Sept 2023
+*
+* 2023-09-15 Updated to expand the search box and reduce exposure time a little, plus
+*            fix the bug where changes in RA were made with units of degrees instead of hours.
 */
 
 "use strict"
@@ -51,7 +54,7 @@ indigo_event_handlers.SLEW_handler = { devices: ["Mount Agent"],
                if (property.state.toUpperCase() == "OK") {
                    moving = false;
                    imaging = false;
-                   imager.CCD_EXPOSURE.change ({EXPOSURE: 1 });
+                   imager.CCD_EXPOSURE.change ({EXPOSURE: 0.75 });
                }
            }
        }
@@ -142,20 +145,11 @@ imager.CCD_FRAME_TYPE.change({LIGHT:true});
 imager.CCD_IMAGE_FORMAT.change({FITS:true});
 imager.CCD_LOCAL_MODE.change({DIR: imagePath});
 
-var R = imager.CCD_LENS_FOV.items.FOV_WIDTH * reductionFactor;
+var R = imager.CCD_LENS_FOV.items.FOV_WIDTH * reductionFactor / 15;  // as RA units are Hours not degrees
 var D = imager.CCD_LENS_FOV.items.FOV_HEIGHT * reductionFactor;
 debug("RA step size :" +R.toFixed(5)+ ", Dec step size:"+D.toFixed(5));
 
-const deltaRA =  [R, 0,-R,-R, 0, 0, R, R, R, 0, 0, 0,-R,-R,-R,-R, 0, 0, 0, 0, R, R, R, R]
-const deltaDec = [0,-D, 0, 0, D, D, 0, 0, 0,-D,-D,-D, 0, 0, 0, 0, D, D, D, D, 0, 0, 0, 0]
+const deltaRA =  [R, 0,-R,-R, 0, 0, R, R, R, 0, 0, 0,-R,-R,-R,-R, 0, 0, 0, 0, R, R, R, R, R, 0, 0, 0, 0, 0,-R,-R,-R,-R,-R,-R, 0, 0, 0, 0, 0, 0, R, R, R, R, R, R, R, 0, 0, 0, 0, 0, 0, 0]
+const deltaDec = [0,-D, 0, 0, D, D, 0, 0, 0,-D,-D,-D, 0, 0, 0, 0, D, D, D, D, 0, 0, 0, 0, 0,-D,-D,-D,-D,-D, 0, 0, 0, 0, 0, 0, D, D, D, D, D, D, 0, 0, 0, 0, 0, 0, 0,-D,-D,-D,-D,-D,-D,-D]
 
 setNewCoords(0);
-
-
-
-
-
-
-
-
-
